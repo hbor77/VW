@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#070710"
+    android:padding="16dp">
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="VW Passat Gauges"
+        android:textSize="22sp"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:paddingBottom="4dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Android Auto OBD-II Dashboard"
+        android:textSize="13sp"
+        android:textColor="#5566AA"
+        android:paddingBottom="16dp" />
+
+    <!-- Status -->
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Status: DISCONNECTED"
+        android:textSize="14sp"
+        android:textColor="#8899BB"
+        android:paddingBottom="4dp" />
+
+    <TextView
+        android:id="@+id/tvSavedDevice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No device saved yet"
+        android:textSize="12sp"
+        android:textColor="#445566"
+        android:paddingBottom="12dp" />
+
+    <!-- Action buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingBottom="12dp">
+
+        <Button
+            android:id="@+id/btnRefresh"
+            android:text="Refresh Devices"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="4dp"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btnDemo"
+            android:text="Demo Mode"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btnDisconnect"
+            android:text="Disconnect"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
+    <!-- Device list header -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Paired Bluetooth Devices — tap to connect:"
+        android:textSize="13sp"
+        android:textColor="#8899BB"
+        android:paddingBottom="6dp" />
+
+    <!-- Device list -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvDevices"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#0E0E1E"
+        android:clipToPadding="false"
+        android:padding="4dp" />
+
+    <!-- Footer help text -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Requires an ELM327 Bluetooth OBD-II adapter (pair it in Android Bluetooth settings first).\n\nConnect here before launching Android Auto. The app reconnects automatically when you plug into your car.\n\nBoost = MAP − barometric pressure. Oil pressure is estimated from engine load (standard OBD-II has no direct oil-pressure sensor on the Passat)."
+        android:textSize="11sp"
+        android:textColor="#334455"
+        android:paddingTop="10dp"
+        android:lineSpacingMultiplier="1.3" />
+
+</LinearLayout>
