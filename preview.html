@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>VW Passat Gauges – Preview</title>
+<style>
+  body { margin: 0; background: #000; display: flex; flex-direction: column;
+         align-items: center; justify-content: center; min-height: 100vh; font-family: monospace; }
+  canvas { border: 1px solid #222; }
+  p { color: #445; font-size: 12px; margin: 6px 0; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1280" height="720"></canvas>
+<p>Live demo — values animate automatically · Mirrors the Android Auto display</p>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// ── Colour zones ──────────────────────────────────────────────────────────────
+const GAUGES = [
+  { label:'OIL PRESSURE', unit:'bar',      min:0,    max:6,
+    zones:[[0,1,'#FF2233'],[1,2,'#FFAA00'],[2,5,'#00DD77'],[5,6,'#FFAA00']],
+    est: true },
+  { label:'OIL TEMP',     unit:'°C',       min:40,   max:160,
+    zones:[[40,70,'#4488FF'],[70,80,'#FFAA00'],[80,130,'#00DD77'],[130,150,'#FFAA00'],[150,160,'#FF2233']] },
+  { label:'BOOST',        unit:'bar',      min:-0.5, max:2.5,
+    zones:[[-0.5,0,'#4488FF'],[0,1.8,'#00DD77'],[1.8,2.2,'#FFAA00'],[2.2,2.5,'#FF2233']] },
+  { label:'COOLANT',      unit:'°C',       min:40,   max:130,
+    zones:[[40,70,'#4488FF'],[70,85,'#FFAA00'],[85,105,'#00DD77'],[105,115,'#FFAA00'],[115,130,'#FF2233']] },
+  { label:'FUEL',         unit:'L/100km',  min:0,    max:25,
+    zones:[[0,6,'#00DD77'],[6,12,'#FFAA00'],[12,18,'#FF6600'],[18,25,'#FF2233']] },
+];
+
+const ARC_START  = (135 * Math.PI) / 180;   // radians
+const ARC_SWEEP  = (270 * Math.PI) / 180;
+const DEG_START  = 135;
+const DEG_SWEEP  = 270;
+
+// ── Gauge positions (3 top + 2 bottom) ───────────────────────────────────────
+function positions() {
+  const usableH = H * 0.92;
+  const topY = usableH * 0.28, botY = usableH * 0.76;
+  const r = Math.min(W / 3 * 0.42, usableH * 0.23,
+                     W / 2 * 0.43, usableH * 0.23);
+  return [
+    [W*0.165, topY, r],
+    [W*0.500, topY, r],
+    [W*0.835, topY, r],
+    [W*0.333, botY, r],
+    [W*0.667, botY, r],
+  ];
+}
+
+// ── Zone colour for a value ───────────────────────────────────────────────────
+function zoneColor(value, zones) {
+  for (const [lo, hi, col] of zones)
+    if (value >= lo && value <= hi) return col;
+  return zones[zones.length-1][2];
+}
+
+// ── Draw one gauge ────────────────────────────────────────────────────────────
+function drawGauge(cx, cy, R, cfg, value) {
+  const arcR  = R * 0.76;
+  const tw    = R * 0.095;   // track width
+  const faceR = R * 0.95;
+
+  // Face radial gradient
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, faceR);
+  grad.addColorStop(0, '#1E1E32');
+  grad.addColorStop(1, '#0B0B18');
+  ctx.beginPath();
+  ctx.arc(cx, cy, faceR, 0, Math.PI*2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Border
+  ctx.beginPath();
+  ctx.arc(cx, cy, faceR, 0, Math.PI*2);
+  ctx.strokeStyle = '#23233A';
+  ctx.lineWidth = R * 0.013;
+  ctx.stroke();
+
+  // Full track
+  ctx.beginPath();
+  ctx.arc(cx, cy, arcR, ARC_START, ARC_START + ARC_SWEEP);
+  ctx.strokeStyle = '#181828';
+  ctx.lineWidth = tw;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Dimmed zone background arcs
+  const range = cfg.max - cfg.min;
+  for (const [lo, hi, col] of cfg.zones) {
+    const sn = (lo - cfg.min) / range;
+    const en = (hi - cfg.min) / range;
+    const sa = ARC_START + sn * ARC_SWEEP;
+    const ea = ARC_START + en * ARC_SWEEP;
+    ctx.beginPath();
+    ctx.arc(cx, cy, arcR, sa, ea);
+    ctx.strokeStyle = col;
+    ctx.globalAlpha = 0.18;
+    ctx.lineWidth = tw * 0.55;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.globalAlpha = 1.0;
+  }
+
+  // Value arc (glow + main)
+  const norm  = Math.max(0, Math.min(1, (value - cfg.min) / range));
+  const sweep = norm * ARC_SWEEP;
+  if (sweep > 0.01) {
+    const col = zoneColor(value, cfg.zones);
+    // Glow
+    ctx.beginPath();
+    ctx.arc(cx, cy, arcR, ARC_START, ARC_START + sweep);
+    ctx.strokeStyle = col;
+    ctx.globalAlpha = 0.22;
+    ctx.lineWidth = tw * 2.4;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.globalAlpha = 1.0;
+    // Main arc
+    ctx.beginPath();
+    ctx.arc(cx, cy, arcR, ARC_START, ARC_START + sweep);
+    ctx.strokeStyle = col;
+    ctx.lineWidth = tw;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+
+  // Tick marks
+  for (let i = 0; i <= 10; i++) {
+    const frac   = i / 10;
+    const angle  = (DEG_START + frac * DEG_SWEEP) * Math.PI / 180;
+    const major  = i % 2 === 0;
+    const outerR = arcR - tw * 0.5;
+    const innerR = outerR - (major ? tw * 1.25 : tw * 0.65);
+    ctx.beginPath();
+    ctx.moveTo(cx + outerR * Math.cos(angle), cy + outerR * Math.sin(angle));
+    ctx.lineTo(cx + innerR * Math.cos(angle), cy + innerR * Math.sin(angle));
+    ctx.strokeStyle = major ? '#3A5070' : '#202838';
+    ctx.lineWidth   = major ? 2 : 1.2;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+
+  // Min / max labels at arc endpoints
+  ctx.font = `${R * 0.13}px monospace`;
+  ctx.fillStyle = '#7799BB';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const labelR = arcR * 1.18;
+  const minA = ARC_START;
+  const maxA = ARC_START + ARC_SWEEP;
+  const minStr = range >= 50 ? cfg.min.toFixed(0) : cfg.min.toFixed(1);
+  const maxStr = range >= 50 ? cfg.max.toFixed(0) : cfg.max.toFixed(1);
+  ctx.fillText(minStr, cx + labelR * Math.cos(minA), cy + labelR * Math.sin(minA));
+  ctx.fillText(maxStr, cx + labelR * Math.cos(maxA), cy + labelR * Math.sin(maxA));
+
+  // Centre value
+  ctx.font = `bold ${R * 0.36}px monospace`;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const dispVal = range >= 50 ? value.toFixed(0) : value.toFixed(1);
+  ctx.fillText(dispVal, cx, cy + R * 0.10);
+
+  // Unit
+  ctx.font = `${R * 0.155}px sans-serif`;
+  ctx.fillStyle = '#7799BB';
+  ctx.fillText(cfg.unit, cx, cy + R * 0.33);
+
+  // Label
+  ctx.font = `bold ${R * 0.145}px sans-serif`;
+  ctx.fillStyle = '#8899BB';
+  ctx.fillText(cfg.label, cx, cy + R * 0.85);
+
+  // ~est badge
+  if (cfg.est) {
+    ctx.font = `${R * 0.115}px monospace`;
+    ctx.fillStyle = '#FFAA00';
+    ctx.fillText('~est', cx, cy - R * 0.35);
+  }
+
+  // Status dot
+  ctx.beginPath();
+  ctx.arc(cx + faceR * 0.64, cy - faceR * 0.64, R * 0.052, 0, Math.PI*2);
+  ctx.fillStyle = '#00DD77';
+  ctx.fill();
+}
+
+// ── Status bar ────────────────────────────────────────────────────────────────
+function drawStatusBar(speed) {
+  const barTop = H * 0.924;
+  ctx.fillStyle = '#0C0C1C';
+  ctx.fillRect(0, barTop, W, H - barTop);
+  ctx.strokeStyle = '#1A1A30';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, barTop); ctx.lineTo(W, barTop); ctx.stroke();
+
+  const textY = barTop + (H - barTop) * 0.72;
+  ctx.font = `bold ${(H - barTop) * 0.52}px monospace`;
+  ctx.fillStyle = '#00DD77';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(`  DEMO MODE  |  ${Math.round(speed)} km/h`, 0, textY);
+
+  ctx.fillStyle = '#333348';
+  ctx.textAlign = 'right';
+  ctx.fillText('VW PASSAT  ', W, textY);
+}
+
+// ── Animation loop ────────────────────────────────────────────────────────────
+let t0 = performance.now();
+
+function frame(now) {
+  const t = (now - t0) / 1000;
+
+  // Animated demo values
+  const speed   = Math.max(0,  80  + 40  * Math.sin(t / 15));
+  const fuelR   = Math.max(0.1, 0.8 + 0.6 * Math.sin(t / 6));
+  const values  = [
+    Math.max(0, 3.2 + 1.4 * Math.sin(t / 4)),           // oil pressure
+    40 + (98 + 12 * Math.sin(t / 9) - 40),               // oil temp
+    -0.5 + (0.7 + 0.8 * Math.sin(t / 3) + 0.5),          // boost
+    40 + (87 + 8  * Math.sin(t / 11) - 40),              // coolant
+    speed > 5 ? (fuelR / speed) * 100 : fuelR * 3,       // fuel L/100km
+  ];
+
+  // Background
+  ctx.fillStyle = '#07070F';
+  ctx.fillRect(0, 0, W, H);
+
+  const pos = positions();
+  pos.forEach(([cx, cy, r], i) => drawGauge(cx, cy, r, GAUGES[i], values[i]));
+  drawStatusBar(speed);
+
+  requestAnimationFrame(frame);
+}
+
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
