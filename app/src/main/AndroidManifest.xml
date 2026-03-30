@@ -18,6 +18,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
 
+        <!-- Android Auto metadata -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+
         <!-- Minimum Car App API level -->
         <meta-data
             android:name="androidx.car.app.minCarApiLevel"
@@ -37,10 +42,11 @@
         <!-- Android Auto Car App Service -->
         <service
             android:name=".CarService"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="androidx.car.app.CarAppService" />
-                <category android:name="androidx.car.app.category.NAVIGATION" />
+                <category android:name="androidx.car.app.category.IOT" />
             </intent-filter>
         </service>
 

@@ -109,7 +109,9 @@ class OBDManager {
 
         // Cache barometric pressure once (ambient, changes rarely)
         val baroResp = sendQuery(VWPids.BARO_PRESSURE)
-        parseSingleByte(baroResp, "4133")?.let { baroKPa = it.toFloat() }
+        if (baroResp != null) {
+            parseSingleByte(baroResp, "4133")?.let { baroKPa = it.toFloat() }
+        }
     }
 
     // ── Polling loop ─────────────────────────────────────────────────────────
@@ -120,8 +122,8 @@ class OBDManager {
             var consecutiveErrors = 0
             while (isActive) {
                 try {
-                    val coolant  = queryFloat(VWPids.COOLANT_TEMP)  { parseSingleByte(it, "4105")?.minus(40) }
-                    val oilTemp  = queryFloat(VWPids.OIL_TEMP)      { parseSingleByte(it, "415C")?.minus(40) }
+                    val coolant  = queryFloat(VWPids.COOLANT_TEMP)  { parseSingleByte(it, "4105")?.minus(40)?.toFloat() }
+                    val oilTemp  = queryFloat(VWPids.OIL_TEMP)      { parseSingleByte(it, "415C")?.minus(40)?.toFloat() }
                     val mapKPa   = queryFloat(VWPids.MAP_PRESSURE)   { parseSingleByte(it, "410B")?.toFloat() }
                     val speed    = queryFloat(VWPids.VEHICLE_SPEED)  { parseSingleByte(it, "410D")?.toFloat() }
                     val fuelRate = queryFloat(VWPids.FUEL_RATE)      { parseTwoBytes(it, "415E")?.let { (a,b) -> (a*256+b)*0.05f } }

@@ -2,7 +2,7 @@ package com.vwgauges.app
 
 import android.content.Context
 import androidx.car.app.CarAppService
-import androidx.car.app.HostValidator
+import androidx.car.app.validation.HostValidator
 import androidx.car.app.Session
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
