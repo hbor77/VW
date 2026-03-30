@@ -32,6 +32,8 @@ const GAUGES = [
     zones:[[40,70,'#4488FF'],[70,85,'#FFAA00'],[85,105,'#00DD77'],[105,115,'#FFAA00'],[115,130,'#FF2233']] },
   { label:'FUEL',         unit:'L/100km',  min:0,    max:25,
     zones:[[0,6,'#00DD77'],[6,12,'#FFAA00'],[12,18,'#FF6600'],[18,25,'#FF2233']] },
+  { label:'VOLTAGE',      unit:'V',        min:11,   max:15.5,
+    zones:[[11,11.8,'#FF2233'],[11.8,12.5,'#FFAA00'],[12.5,14.8,'#00DD77'],[14.8,15.2,'#FFAA00'],[15.2,15.5,'#FF2233']] },
 ];
 
 const ARC_START  = (135 * Math.PI) / 180;   // radians
@@ -39,18 +41,18 @@ const ARC_SWEEP  = (270 * Math.PI) / 180;
 const DEG_START  = 135;
 const DEG_SWEEP  = 270;
 
-// ── Gauge positions (3 top + 2 bottom) ───────────────────────────────────────
+// ── Gauge positions (3×2 grid) ───────────────────────────────────────────────
 function positions() {
   const usableH = H * 0.92;
   const topY = usableH * 0.28, botY = usableH * 0.76;
-  const r = Math.min(W / 3 * 0.42, usableH * 0.23,
-                     W / 2 * 0.43, usableH * 0.23);
+  const r = Math.min(W / 3 * 0.42, usableH * 0.23);
   return [
-    [W*0.165, topY, r],
-    [W*0.500, topY, r],
-    [W*0.835, topY, r],
-    [W*0.333, botY, r],
-    [W*0.667, botY, r],
+    [W*0.165, topY, r],   // Oil Pressure
+    [W*0.500, topY, r],   // Oil Temp
+    [W*0.835, topY, r],   // Boost
+    [W*0.165, botY, r],   // Coolant
+    [W*0.500, botY, r],   // Fuel
+    [W*0.835, botY, r],   // Voltage
   ];
 }
 
@@ -228,6 +230,7 @@ function frame(now) {
     -0.5 + (0.7 + 0.8 * Math.sin(t / 3) + 0.5),          // boost
     40 + (87 + 8  * Math.sin(t / 11) - 40),              // coolant
     speed > 5 ? (fuelR / speed) * 100 : fuelR * 3,       // fuel L/100km
+    13.8 + 0.6 * Math.sin(t / 7),                        // voltage
   ];
 
   // Background

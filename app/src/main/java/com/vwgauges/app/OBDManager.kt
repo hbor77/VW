@@ -79,6 +79,7 @@ class OBDManager {
                     turboBoostPressure    = (0.7f + 0.8f * sin(t / 3.0).toFloat()).coerceIn(-0.5f, 2.5f),
                     coolantTemperature    = (87f  + 8f   * sin(t / 11.0).toFloat()).coerceIn(40f, 130f),
                     fuelConsumption       = fuelL100.coerceIn(0f, 25f),
+                    batteryVoltage        = (13.8f + 0.6f * sin(t / 7.0).toFloat()).coerceIn(11f, 15.5f),
                     speed                 = speed,
                     isConnected           = false,
                     isDemoMode            = true,
@@ -122,12 +123,13 @@ class OBDManager {
             var consecutiveErrors = 0
             while (isActive) {
                 try {
-                    val coolant  = queryFloat(VWPids.COOLANT_TEMP)  { parseSingleByte(it, "4105")?.minus(40)?.toFloat() }
-                    val oilTemp  = queryFloat(VWPids.OIL_TEMP)      { parseSingleByte(it, "415C")?.minus(40)?.toFloat() }
-                    val mapKPa   = queryFloat(VWPids.MAP_PRESSURE)   { parseSingleByte(it, "410B")?.toFloat() }
-                    val speed    = queryFloat(VWPids.VEHICLE_SPEED)  { parseSingleByte(it, "410D")?.toFloat() }
-                    val fuelRate = queryFloat(VWPids.FUEL_RATE)      { parseTwoBytes(it, "415E")?.let { (a,b) -> (a*256+b)*0.05f } }
-                    val load     = queryFloat(VWPids.ENGINE_LOAD)    { parseSingleByte(it, "4104")?.let { b -> b*100f/255f } }
+                    val coolant  = queryFloat(VWPids.COOLANT_TEMP)           { parseSingleByte(it, "4105")?.minus(40)?.toFloat() }
+                    val oilTemp  = queryFloat(VWPids.OIL_TEMP)               { parseSingleByte(it, "415C")?.minus(40)?.toFloat() }
+                    val mapKPa   = queryFloat(VWPids.MAP_PRESSURE)            { parseSingleByte(it, "410B")?.toFloat() }
+                    val speed    = queryFloat(VWPids.VEHICLE_SPEED)           { parseSingleByte(it, "410D")?.toFloat() }
+                    val fuelRate = queryFloat(VWPids.FUEL_RATE)               { parseTwoBytes(it, "415E")?.let { (a,b) -> (a*256+b)*0.05f } }
+                    val load     = queryFloat(VWPids.ENGINE_LOAD)             { parseSingleByte(it, "4104")?.let { b -> b*100f/255f } }
+                    val voltage  = queryFloat(VWPids.CONTROL_MODULE_VOLTAGE)  { parseTwoBytes(it, "4142")?.let { (a,b) -> (a*256+b)/1000f } }
 
                     if (speed != null) lastSpeed = speed
 
@@ -144,6 +146,7 @@ class OBDManager {
                         turboBoostPressure    = boostBar.coerceIn(-0.5f, 2.5f),
                         coolantTemperature    = coolant  ?: _gaugeData.value.coolantTemperature,
                         fuelConsumption       = fuelL100.coerceIn(0f, 25f),
+                        batteryVoltage        = voltage  ?: _gaugeData.value.batteryVoltage,
                         speed                 = lastSpeed,
                         isConnected           = true,
                         isDemoMode            = false,

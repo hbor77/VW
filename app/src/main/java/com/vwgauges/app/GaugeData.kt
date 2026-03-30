@@ -8,6 +8,7 @@ package com.vwgauges.app
  * turboBoostPressure  – bar  (gauge pressure: MAP − barometric, derived from PID 0x0B / 0x33)
  * coolantTemperature  – °C   (OBD-II PID 0x05)
  * fuelConsumption     – L/100km (derived from PID 0x5E fuel rate + PID 0x0D speed)
+ * batteryVoltage      – V    (OBD-II PID 0x42 control module voltage)
  */
 data class GaugeData(
     val oilPressure: Float = 0f,
@@ -15,6 +16,7 @@ data class GaugeData(
     val turboBoostPressure: Float = 0f,
     val coolantTemperature: Float = 0f,
     val fuelConsumption: Float = 0f,
+    val batteryVoltage: Float = 0f,
     val speed: Float = 0f,
     val isConnected: Boolean = false,
     val isDemoMode: Boolean = false,

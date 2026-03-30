@@ -208,13 +208,27 @@ class GaugeRenderer(private val surface: Surface, val width: Int, val height: In
                 ColorZone(18f,  25f, Color.parseColor("#FF2233"))
             ),
             hasData = d.isConnected || d.isDemoMode
+        ),
+        GaugeConfig(
+            label = "VOLTAGE",
+            unit  = "V",
+            min   = 11f, max = 15.5f,
+            value = d.batteryVoltage.coerceIn(11f, 15.5f),
+            zones = listOf(
+                ColorZone(11f,   11.8f, Color.parseColor("#FF2233")),
+                ColorZone(11.8f, 12.5f, Color.parseColor("#FFAA00")),
+                ColorZone(12.5f, 14.8f, Color.parseColor("#00DD77")),
+                ColorZone(14.8f, 15.2f, Color.parseColor("#FFAA00")),
+                ColorZone(15.2f, 15.5f, Color.parseColor("#FF2233"))
+            ),
+            hasData = d.isConnected || d.isDemoMode
         )
     )
 
     // ── Gauge positions ───────────────────────────────────────────────────────
 
     /**
-     * Returns list of (centerX, centerY, radius) for the 5 gauges.
+     * Returns list of (centerX, centerY, radius) for the 6 gauges in a 3×2 grid.
      * Reserves 8 % of height at the bottom for the status bar.
      */
     private fun gaugePositions(): List<Triple<Float, Float, Float>> {
@@ -224,16 +238,15 @@ class GaugeRenderer(private val surface: Surface, val width: Int, val height: In
         val topY = usableH * 0.28f
         val botY = usableH * 0.76f
 
-        val maxTopR = min(w / 3f * 0.42f, usableH * 0.23f)
-        val maxBotR = min(w / 2f * 0.43f, usableH * 0.23f)
-        val r = min(maxTopR, maxBotR)
+        val r = min(w / 3f * 0.42f, usableH * 0.23f)
 
         return listOf(
             Triple(w * 0.165f, topY, r),   // Oil Pressure
             Triple(w * 0.500f, topY, r),   // Oil Temp
             Triple(w * 0.835f, topY, r),   // Boost
-            Triple(w * 0.333f, botY, r),   // Coolant
-            Triple(w * 0.667f, botY, r)    // Fuel
+            Triple(w * 0.165f, botY, r),   // Coolant
+            Triple(w * 0.500f, botY, r),   // Fuel
+            Triple(w * 0.835f, botY, r)    // Voltage
         )
     }
 

@@ -44,6 +44,13 @@ object VWPids {
     /** Barometric (ambient) pressure. Formula: A → kPa */
     const val BARO_PRESSURE = "0133"
 
+    /**
+     * Control module voltage (battery / charging voltage).
+     * Formula: (256A + B) / 1000 → V
+     * Typical range: 11.5 V (engine off) to 14.8 V (alternator charging).
+     */
+    const val CONTROL_MODULE_VOLTAGE = "0142"
+
     // ── ELM327 AT commands ────────────────────────────────────────────────────
 
     const val CMD_RESET         = "ATZ"
